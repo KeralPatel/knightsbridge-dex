@@ -1,7 +1,10 @@
 import { SignJWT, jwtVerify } from 'jose'
 
-if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var is not set')
-const secret = new TextEncoder().encode(process.env.JWT_SECRET)
+function getSecret(): Uint8Array {
+  const s = process.env.JWT_SECRET
+  if (!s) throw new Error('JWT_SECRET env var is not set')
+  return new TextEncoder().encode(s)
+}
 
 export interface JWTPayload {
   sub: string      // user id
@@ -16,11 +19,11 @@ export async function signToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promi
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(secret)
+    .sign(getSecret())
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload> {
-  const { payload } = await jwtVerify(token, secret)
+  const { payload } = await jwtVerify(token, getSecret())
   return payload as unknown as JWTPayload
 }
 

@@ -1,11 +1,14 @@
 import crypto from 'crypto'
 
-const HMAC_SECRET = process.env.WORKER_HMAC_SECRET
-if (!HMAC_SECRET) throw new Error('WORKER_HMAC_SECRET env var is not set')
+function getHmacSecret(): string {
+  const s = process.env.WORKER_HMAC_SECRET
+  if (!s) throw new Error('WORKER_HMAC_SECRET env var is not set')
+  return s
+}
 
 export function signPayload(payload: string): string {
   return crypto
-    .createHmac('sha256', HMAC_SECRET)
+    .createHmac('sha256', getHmacSecret())
     .update(payload)
     .digest('hex')
 }
