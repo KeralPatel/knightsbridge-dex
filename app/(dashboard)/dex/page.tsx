@@ -19,25 +19,42 @@ const COINGECKO_IDS: Record<string, string> = {
   UNI:  'uniswap',
 }
 
-// Mainnet tokens
-const MAINNET_TOKENS = [
-  { symbol: 'ETH',  address: 'ETH',                                           logo: '⟠', price: 0, chainId: 1, decimals: 18 },
-  { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', logo: '💲', price: 0, chainId: 1, decimals: 6  },
-  { symbol: 'USDT', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', logo: '💵', price: 0, chainId: 1, decimals: 6  },
-  { symbol: 'WBTC', address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', logo: '₿', price: 0, chainId: 1, decimals: 8  },
-  { symbol: 'LINK', address: '0x514910771af9ca656af840dff83e8264ecf986ca', logo: '⬡', price: 0, chainId: 1, decimals: 18 },
-  { symbol: 'UNI',  address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', logo: '🦄', price: 0, chainId: 1, decimals: 18 },
-]
+// Per-chain token lists
+const TOKENS_BY_CHAIN: Record<number, Token[]> = {
+  1: [
+    { symbol: 'ETH',  address: 'ETH',                                           logo: '⟠', price: 0, chainId: 1, decimals: 18 },
+    { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', logo: '💲', price: 0, chainId: 1, decimals: 6  },
+    { symbol: 'USDT', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', logo: '💵', price: 0, chainId: 1, decimals: 6  },
+    { symbol: 'WBTC', address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', logo: '₿', price: 0, chainId: 1, decimals: 8  },
+    { symbol: 'LINK', address: '0x514910771af9ca656af840dff83e8264ecf986ca', logo: '⬡', price: 0, chainId: 1, decimals: 18 },
+    { symbol: 'UNI',  address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', logo: '🦄', price: 0, chainId: 1, decimals: 18 },
+  ],
+  8453: [
+    { symbol: 'ETH',  address: 'ETH',                                           logo: '⟠', price: 0, chainId: 8453, decimals: 18 },
+    { symbol: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', logo: '💲', price: 0, chainId: 8453, decimals: 6  },
+    { symbol: 'WETH', address: '0x4200000000000000000000000000000000000006', logo: '⟠', price: 0, chainId: 8453, decimals: 18 },
+    { symbol: 'CBBTC',address: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf', logo: '₿', price: 0, chainId: 8453, decimals: 8  },
+  ],
+  56: [
+    { symbol: 'BNB',  address: 'ETH',                                           logo: '🟡', price: 0, chainId: 56, decimals: 18 },
+    { symbol: 'USDT', address: '0x55d398326f99059ff775485246999027b3197955', logo: '💵', price: 0, chainId: 56, decimals: 18 },
+    { symbol: 'USDC', address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', logo: '💲', price: 0, chainId: 56, decimals: 18 },
+    { symbol: 'WBNB', address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', logo: '🟡', price: 0, chainId: 56, decimals: 18 },
+    { symbol: 'ETH',  address: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8', logo: '⟠', price: 0, chainId: 56, decimals: 18 },
+    { symbol: 'CAKE', address: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82', logo: '🥞', price: 0, chainId: 56, decimals: 18 },
+  ],
+}
 
-// Sepolia testnet tokens (0x Sepolia supported tokens)
-const SEPOLIA_TOKENS = [
-  { symbol: 'ETH',  address: 'ETH',                                           logo: '⟠', price: 0, chainId: 11155111, decimals: 18 },
-  { symbol: 'USDC', address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', logo: '💲', price: 1, chainId: 11155111, decimals: 6  },
-  { symbol: 'WETH', address: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14', logo: '⟠', price: 0, chainId: 11155111, decimals: 18 },
-  { symbol: 'LINK', address: '0x779877A7B0D9E8603169DdbD7836e478b4624789', logo: '⬡', price: 0, chainId: 11155111, decimals: 18 },
-]
+const COINGECKO_IDS_BNB: Record<string, string> = {
+  BNB:  'binancecoin',
+  USDT: 'tether',
+  USDC: 'usd-coin',
+  WBNB: 'binancecoin',
+  ETH:  'ethereum',
+  CAKE: 'pancakeswap-token',
+}
 
-const BASE_TOKENS = MAINNET_TOKENS
+const BASE_TOKENS = TOKENS_BY_CHAIN[1]
 
 interface Token { symbol: string; address: string; logo: string; price: number; chainId: number; decimals: number }
 
@@ -100,8 +117,8 @@ function TokenSelectorModal({ open, onClose, onSelect, exclude, tokenList }: {
 
 export default function DexPage() {
   const { isConnected, connect, address, signer, chainId } = useEthersContext()
-  const isSepolia = chainId === 11155111
-  const defaultTokens = isSepolia ? SEPOLIA_TOKENS : MAINNET_TOKENS
+  const activeChainId = chainId ?? 1
+  const defaultTokens = TOKENS_BY_CHAIN[activeChainId] ?? TOKENS_BY_CHAIN[1]
   const [tokens, setTokens] = useState<Token[]>(defaultTokens)
   const [sellToken, setSellToken] = useState<Token>(defaultTokens[0])
   const [buyToken, setBuyToken] = useState<Token>(defaultTokens[1])
@@ -120,7 +137,7 @@ export default function DexPage() {
 
   // Reset token list when chain changes
   useEffect(() => {
-    const list = chainId === 11155111 ? SEPOLIA_TOKENS : MAINNET_TOKENS
+    const list = TOKENS_BY_CHAIN[chainId ?? 1] ?? TOKENS_BY_CHAIN[1]
     setTokens(list)
     setSellToken(list[0])
     setBuyToken(list[1])
@@ -128,36 +145,34 @@ export default function DexPage() {
     setSellAmount('')
   }, [chainId])
 
-  // Fetch live prices from CoinGecko every 60s (mainnet only)
+  // Fetch live prices from CoinGecko every 60s
   useEffect(() => {
-    if (chainId === 11155111) return // Sepolia prices are ~fake anyway
-    const ids = Object.values(COINGECKO_IDS).join(',')
+    const cgIds = chainId === 56 ? COINGECKO_IDS_BNB : COINGECKO_IDS
+    const ids = [...new Set(Object.values(cgIds))].join(',')
     const fetchPrices = async () => {
       try {
         const res = await fetch(
           `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`,
-          { next: { revalidate: 60 } }
         )
         if (!res.ok) return
         const data = await res.json()
         setTokens(prev => prev.map(t => ({
           ...t,
-          price: data[COINGECKO_IDS[t.symbol]]?.usd ?? t.price,
+          price: data[cgIds[t.symbol]]?.usd ?? t.price,
         })))
-        // Update currently selected tokens if their prices changed
-        setSellToken(prev => ({ ...prev, price: data[COINGECKO_IDS[prev.symbol]]?.usd ?? prev.price }))
-        setBuyToken(prev => ({ ...prev, price: data[COINGECKO_IDS[prev.symbol]]?.usd ?? prev.price }))
-      } catch { /* silently ignore — stale price shown */ }
+        setSellToken(prev => ({ ...prev, price: data[cgIds[prev.symbol]]?.usd ?? prev.price }))
+        setBuyToken(prev => ({ ...prev, price: data[cgIds[prev.symbol]]?.usd ?? prev.price }))
+      } catch { /* silently ignore */ }
     }
     fetchPrices()
     const interval = setInterval(fetchPrices, 60_000)
     return () => clearInterval(interval)
-  }, [])
+  }, [chainId])
 
   const effectiveSlippage = customSlippage || slippage
 
   const fetchQuote = useCallback(async () => {
-    if (!sellAmount || parseFloat(sellAmount) <= 0 || chainId === 11155111) {
+    if (!sellAmount || parseFloat(sellAmount) <= 0) {
       setQuote(null)
       setSwapTx(null)
       return
@@ -268,16 +283,6 @@ export default function DexPage() {
         <p className="text-sm text-[#9CA3AF] mt-0.5">Best-rate execution via 0x Protocol aggregator</p>
       </div>
 
-      {isSepolia && (
-        <div className="mb-4 bg-[rgba(245,158,11,0.06)] border border-[rgba(245,158,11,0.3)] rounded-lg p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-semibold text-[#F59E0B]">⚠ Sepolia Testnet — DEX Routing Unavailable</span>
-          </div>
-          <p className="text-xs text-[#9CA3AF]">
-            DEX aggregation is not available on Sepolia. Switch to Ethereum Mainnet or Base in the chain selector above to use the swap aggregator.
-          </p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Swap Widget */}

@@ -1,7 +1,7 @@
 const BASE_URLS: Record<number, string> = {
-  1:        'https://api.0x.org',
-  8453:     'https://base.api.0x.org',
-  11155111: 'https://api.0x.org',   // Sepolia uses same endpoint, chainId param differentiates
+  1:    'https://api.0x.org',
+  8453: 'https://base.api.0x.org',
+  56:   'https://api.0x.org',   // BNB Chain — chainId param differentiates
 }
 
 export function get0xBaseUrl(chainId: number = 1): string {
