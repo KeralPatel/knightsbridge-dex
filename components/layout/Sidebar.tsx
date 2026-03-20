@@ -68,7 +68,12 @@ const NAV_ITEMS = [
   },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname()
   const { address, isConnected, connect, isConnecting, disconnect } = useEthersContext()
 
@@ -77,107 +82,137 @@ export function Sidebar() {
     return pathname.startsWith(href)
   }
 
+  const handleNavClick = () => {
+    onClose?.()
+  }
+
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[240px] bg-[#11161D] border-r border-[#1F2A37] flex flex-col z-40">
-      {/* Logo */}
-      <div className="px-5 py-4 border-b border-[#1F2A37]">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-[#00FFA3] rounded flex items-center justify-center">
-            <svg className="w-4 h-4 text-[#0B0F14]" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
-            </svg>
-          </div>
-          <div>
-            <div className="text-sm font-semibold text-[#E5E7EB] leading-none">Knightsbridge</div>
-            <div className="text-[10px] text-[#00FFA3] font-medium leading-tight mt-0.5">DEX INTELLIGENCE</div>
-          </div>
-        </Link>
-      </div>
+    <>
+      {/* Mobile overlay backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
-        <div className="space-y-0.5">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`
-                flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium
-                transition-colors duration-100
-                ${isActive(item.href)
-                  ? 'bg-[rgba(0,255,163,0.08)] text-[#00FFA3]'
-                  : 'text-[#9CA3AF] hover:text-[#E5E7EB] hover:bg-[#1F2A37]'
-                }
-              `}
-            >
-              <span className={isActive(item.href) ? 'text-[#00FFA3]' : 'text-[#9CA3AF]'}>
-                {item.icon}
-              </span>
-              <span className="flex-1">{item.label}</span>
-              {item.badge && (
-                <span className="text-[9px] font-semibold bg-[#00FFA3] text-[#0B0F14] px-1.5 py-0.5 rounded-full">
-                  {item.badge}
-                </span>
-              )}
-              {item.live && (
-                <span className="flex items-center gap-1">
-                  <span className="live-dot w-1.5 h-1.5 bg-[#00FFA3] rounded-full" />
-                </span>
-              )}
-            </Link>
-          ))}
-        </div>
-
-        {/* Market status */}
-        <div className="mt-6 px-3">
-          <div className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-2 font-medium">Markets</div>
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-[#9CA3AF]">ETH</span>
-              <span className="text-[#E5E7EB] tabular-nums font-medium">$3,412.50</span>
+      {/* Sidebar */}
+      <aside className={`
+        fixed left-0 top-0 h-screen w-[240px] bg-[#11161D] border-r border-[#1F2A37] flex flex-col z-50
+        transition-transform duration-200 ease-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0
+      `}>
+        {/* Logo */}
+        <div className="px-5 py-4 border-b border-[#1F2A37] flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5" onClick={handleNavClick}>
+            <div className="w-7 h-7 bg-[#00FFA3] rounded flex items-center justify-center">
+              <svg className="w-4 h-4 text-[#0B0F14]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+              </svg>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-[#9CA3AF]">Gas</span>
-              <span className="text-[#E5E7EB] tabular-nums font-medium">12 gwei</span>
+            <div>
+              <div className="text-sm font-semibold text-[#E5E7EB] leading-none">Knightsbridge</div>
+              <div className="text-[10px] text-[#00FFA3] font-medium leading-tight mt-0.5">DEX INTELLIGENCE</div>
             </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Wallet Connect */}
-      <div className="p-3 border-t border-[#1F2A37]">
-        {isConnected && address ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 px-3 py-2 bg-[#0B0F14] rounded border border-[#1F2A37]">
-              <div className="w-2 h-2 rounded-full bg-[#00FFA3]" />
-              <span className="text-xs text-[#E5E7EB] font-mono tabular-nums flex-1 truncate">
-                {address.slice(0, 6)}...{address.slice(-4)}
-              </span>
-            </div>
-            <button
-              onClick={disconnect}
-              className="w-full text-xs text-[#9CA3AF] hover:text-[#EF4444] transition-colors text-center py-1"
-            >
-              Disconnect
-            </button>
-          </div>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            fullWidth
-            onClick={connect}
-            loading={isConnecting}
+          </Link>
+          {/* Close button — mobile only */}
+          <button
+            className="md:hidden p-1 text-[#9CA3AF] hover:text-[#E5E7EB]"
+            onClick={onClose}
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 12V7H5a2 2 0 010-4h14v4" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M3 7v13a2 2 0 002 2h14v-5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M18 12h3v5h-3a2.5 2.5 0 010-5z" />
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Connect Wallet
-          </Button>
-        )}
-      </div>
-    </aside>
+          </button>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 overflow-y-auto">
+          <div className="space-y-0.5">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={handleNavClick}
+                className={`
+                  flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium
+                  transition-colors duration-100
+                  ${isActive(item.href)
+                    ? 'bg-[rgba(0,255,163,0.08)] text-[#00FFA3]'
+                    : 'text-[#9CA3AF] hover:text-[#E5E7EB] hover:bg-[#1F2A37]'
+                  }
+                `}
+              >
+                <span className={isActive(item.href) ? 'text-[#00FFA3]' : 'text-[#9CA3AF]'}>
+                  {item.icon}
+                </span>
+                <span className="flex-1">{item.label}</span>
+                {item.badge && (
+                  <span className="text-[9px] font-semibold bg-[#00FFA3] text-[#0B0F14] px-1.5 py-0.5 rounded-full">
+                    {item.badge}
+                  </span>
+                )}
+                {item.live && (
+                  <span className="flex items-center gap-1">
+                    <span className="live-dot w-1.5 h-1.5 bg-[#00FFA3] rounded-full" />
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {/* Market status */}
+          <div className="mt-6 px-3">
+            <div className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-2 font-medium">Markets</div>
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#9CA3AF]">ETH</span>
+                <span className="text-[#E5E7EB] tabular-nums font-medium">$3,412.50</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#9CA3AF]">Gas</span>
+                <span className="text-[#E5E7EB] tabular-nums font-medium">12 gwei</span>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        {/* Wallet Connect */}
+        <div className="p-3 border-t border-[#1F2A37]">
+          {isConnected && address ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 px-3 py-2 bg-[#0B0F14] rounded border border-[#1F2A37]">
+                <div className="w-2 h-2 rounded-full bg-[#00FFA3]" />
+                <span className="text-xs text-[#E5E7EB] font-mono tabular-nums flex-1 truncate">
+                  {address.slice(0, 6)}...{address.slice(-4)}
+                </span>
+              </div>
+              <button
+                onClick={disconnect}
+                className="w-full text-xs text-[#9CA3AF] hover:text-[#EF4444] transition-colors text-center py-1"
+              >
+                Disconnect
+              </button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={connect}
+              loading={isConnecting}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 12V7H5a2 2 0 010-4h14v4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 7v13a2 2 0 002 2h14v-5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M18 12h3v5h-3a2.5 2.5 0 010-5z" />
+              </svg>
+              Connect Wallet
+            </Button>
+          )}
+        </div>
+      </aside>
+    </>
   )
 }
