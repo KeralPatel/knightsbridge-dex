@@ -12,6 +12,8 @@ export function get0xBaseUrl(chainId: number = 1): string {
 export async function fetch0x(path: string, chainId: number = 1, params?: Record<string, string>) {
   const baseUrl = get0xBaseUrl(chainId)
   const url = new URL(`${baseUrl}${path}`)
+  // 0x v2 requires chainId as a query param
+  url.searchParams.set('chainId', chainId.toString())
   if (params) {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
   }
