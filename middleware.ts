@@ -6,8 +6,6 @@ import { verifyToken, extractToken } from '@/lib/security/jwt'
 const PROTECTED_API_ROUTES = [
   '/api/user',
   '/api/launchpad/deploy',
-  '/api/dex/swap',
-  '/api/dex/simulate',
   '/api/intelligence',
 ]
 
