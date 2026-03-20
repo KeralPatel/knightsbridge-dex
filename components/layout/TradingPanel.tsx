@@ -3,24 +3,26 @@
 import { useState, useEffect } from 'react'
 import { useEthersContext } from '@/app/providers'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 
 const POPULAR_TOKENS = [
-  { symbol: 'ETH', address: 'native', price: 3412.50 },
-  { symbol: 'WBTC', address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', price: 67823.00 },
-  { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', price: 1.00 },
-  { symbol: 'USDT', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', price: 1.00 },
+  { symbol: 'ETH',  address: 'ETH',                                           decimals: 18 },
+  { symbol: 'WBTC', address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', decimals: 8  },
+  { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', decimals: 6  },
+  { symbol: 'USDT', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', decimals: 6  },
 ]
 
 export function TradingPanel() {
   const { isConnected, connect } = useEthersContext()
-  const [sellToken, setSellToken] = useState('ETH')
-  const [buyToken, setBuyToken] = useState('USDC')
+  const [sellSymbol, setSellSymbol] = useState('ETH')
+  const [buySymbol, setBuySymbol] = useState('USDC')
   const [sellAmount, setSellAmount] = useState('')
-  const [buyAmount, setBuyAmount] = useState('')
+  const [buyAmount, setBuyAmount] = useState('')   // human-readable
   const [slippage, setSlippage] = useState('0.5')
   const [loading, setLoading] = useState(false)
   const [quote, setQuote] = useState<{ price?: string; priceImpact?: string } | null>(null)
+
+  const sellToken = POPULAR_TOKENS.find(t => t.symbol === sellSymbol)!
+  const buyToken  = POPULAR_TOKENS.find(t => t.symbol === buySymbol)!
 
   // Fetch quote on amount change
   useEffect(() => {
@@ -31,10 +33,17 @@ export function TradingPanel() {
     }
     const timeout = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/dex/quote?sellToken=${sellToken}&buyToken=${buyToken}&sellAmount=${sellAmount}&chainId=1`)
+        const res = await fetch(
+          `/api/dex/quote?sellToken=${sellToken.address}&buyToken=${buyToken.address}` +
+          `&sellAmount=${sellAmount}&chainId=1&decimals=${sellToken.decimals}&buyDecimals=${buyToken.decimals}`
+        )
         if (res.ok) {
           const data = await res.json()
-          setBuyAmount(data.buyAmount || '')
+          // Convert raw buyAmount (smallest units) to human-readable
+          const human = data.buyAmount
+            ? (parseFloat(data.buyAmount) / Math.pow(10, buyToken.decimals)).toFixed(4)
+            : ''
+          setBuyAmount(human)
           setQuote(data)
         }
       } catch { /* silent */ }
@@ -47,15 +56,15 @@ export function TradingPanel() {
     setLoading(true)
     try {
       // Navigate to full DEX page for complete swap flow
-      window.location.href = `/dex?sell=${sellToken}&buy=${buyToken}&amount=${sellAmount}`
+      window.location.href = `/dex?sell=${sellSymbol}&buy=${buySymbol}&amount=${sellAmount}`
     } finally {
       setLoading(false)
     }
   }
 
   const swapTokens = () => {
-    setSellToken(buyToken)
-    setBuyToken(sellToken)
+    setSellSymbol(buySymbol)
+    setBuySymbol(sellSymbol)
     setSellAmount(buyAmount)
     setBuyAmount(sellAmount)
   }
@@ -91,8 +100,8 @@ export function TradingPanel() {
           </div>
           <div className="flex items-center gap-2">
             <select
-              value={sellToken}
-              onChange={(e) => setSellToken(e.target.value)}
+              value={sellSymbol}
+              onChange={(e) => setSellSymbol(e.target.value)}
               className="bg-[#1F2A37] text-sm text-[#E5E7EB] rounded px-2 py-1.5 border-0 outline-none cursor-pointer font-medium"
             >
               {POPULAR_TOKENS.map((t) => <option key={t.symbol} value={t.symbol}>{t.symbol}</option>)}
@@ -125,14 +134,14 @@ export function TradingPanel() {
           </div>
           <div className="flex items-center gap-2">
             <select
-              value={buyToken}
-              onChange={(e) => setBuyToken(e.target.value)}
+              value={buySymbol}
+              onChange={(e) => setBuySymbol(e.target.value)}
               className="bg-[#1F2A37] text-sm text-[#E5E7EB] rounded px-2 py-1.5 border-0 outline-none cursor-pointer font-medium"
             >
               {POPULAR_TOKENS.map((t) => <option key={t.symbol} value={t.symbol}>{t.symbol}</option>)}
             </select>
             <div className="text-right text-lg font-semibold text-[#00FFA3] w-full tabular-nums">
-              {buyAmount ? parseFloat(buyAmount).toFixed(4) : '0.0'}
+              {buyAmount || '0.0'}
             </div>
           </div>
         </div>
