@@ -30,10 +30,17 @@ export async function getPrice(params: {
   sellDecimals?: number
   buyDecimals?: number
 }): Promise<{ price: string; priceImpact: string; buyAmount: string; estimatedGas: string }> {
+  const feeRecipient = process.env.NEXT_PUBLIC_FEE_RECIPIENT
+  const feeBps       = process.env.NEXT_PUBLIC_INTEGRATOR_FEE_BPS || '15'  // 0.15% default
+
   const data = await fetch0x('/swap/permit2/price', params.chainId, {
     sellToken: params.sellToken,
     buyToken: params.buyToken,
     sellAmount: params.sellAmount,
+    ...(feeRecipient && {
+      integratorFeeRecipient: feeRecipient,
+      integratorFeeBps: feeBps,
+    }),
   })
 
   // 0x price endpoint returns gas (not estimatedGas) and no price field.
@@ -60,12 +67,19 @@ export async function getQuote(params: {
   slippageBps: number
   chainId: number
 }): Promise<QuoteResult> {
+  const feeRecipient = process.env.NEXT_PUBLIC_FEE_RECIPIENT
+  const feeBps       = process.env.NEXT_PUBLIC_INTEGRATOR_FEE_BPS || '15'
+
   const data = await fetch0x('/swap/permit2/quote', params.chainId, {
     sellToken: params.sellToken,
     buyToken: params.buyToken,
     sellAmount: params.sellAmount,
     taker: params.takerAddress,
     slippageBps: params.slippageBps.toString(),
+    ...(feeRecipient && {
+      integratorFeeRecipient: feeRecipient,
+      integratorFeeBps: feeBps,
+    }),
   })
 
   const routes: RouteStep[] = (data.route?.fills || []).map((fill: {
