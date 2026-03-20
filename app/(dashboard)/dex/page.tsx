@@ -10,13 +10,22 @@ import { RiskBadge } from '@/components/launchpad/RiskBadge'
 import { Spinner } from '@/components/ui/Spinner'
 import { ERC20_ABI } from '@/lib/ethers/contracts'
 
-const COMMON_TOKENS = [
-  { symbol: 'ETH',  address: 'ETH',                                           logo: '⟠', price: 3412.50,  chainId: 1, decimals: 18 },
-  { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', logo: '💲', price: 1.00,     chainId: 1, decimals: 6  },
-  { symbol: 'USDT', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', logo: '💵', price: 1.00,     chainId: 1, decimals: 6  },
-  { symbol: 'WBTC', address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', logo: '₿', price: 67823.00, chainId: 1, decimals: 8  },
-  { symbol: 'LINK', address: '0x514910771af9ca656af840dff83e8264ecf986ca', logo: '⬡', price: 14.20,    chainId: 1, decimals: 18 },
-  { symbol: 'UNI',  address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', logo: '🦄', price: 8.45,     chainId: 1, decimals: 18 },
+const COINGECKO_IDS: Record<string, string> = {
+  ETH:  'ethereum',
+  USDC: 'usd-coin',
+  USDT: 'tether',
+  WBTC: 'wrapped-bitcoin',
+  LINK: 'chainlink',
+  UNI:  'uniswap',
+}
+
+const BASE_TOKENS = [
+  { symbol: 'ETH',  address: 'ETH',                                           logo: '⟠', price: 0, chainId: 1, decimals: 18 },
+  { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', logo: '💲', price: 0, chainId: 1, decimals: 6  },
+  { symbol: 'USDT', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', logo: '💵', price: 0, chainId: 1, decimals: 6  },
+  { symbol: 'WBTC', address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', logo: '₿', price: 0, chainId: 1, decimals: 8  },
+  { symbol: 'LINK', address: '0x514910771af9ca656af840dff83e8264ecf986ca', logo: '⬡', price: 0, chainId: 1, decimals: 18 },
+  { symbol: 'UNI',  address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', logo: '🦄', price: 0, chainId: 1, decimals: 18 },
 ]
 
 interface Token { symbol: string; address: string; logo: string; price: number; chainId: number; decimals: number }
@@ -36,14 +45,15 @@ interface SwapTxData {
   estimatedGas: string
 }
 
-function TokenSelectorModal({ open, onClose, onSelect, exclude }: {
+function TokenSelectorModal({ open, onClose, onSelect, exclude, tokenList }: {
   open: boolean
   onClose: () => void
   onSelect: (token: Token) => void
   exclude?: string
+  tokenList: Token[]
 }) {
   const [search, setSearch] = useState('')
-  const filtered = COMMON_TOKENS.filter(
+  const filtered = tokenList.filter(
     (t) => t.address !== exclude &&
     (t.symbol.toLowerCase().includes(search.toLowerCase()))
   )
@@ -79,8 +89,9 @@ function TokenSelectorModal({ open, onClose, onSelect, exclude }: {
 
 export default function DexPage() {
   const { isConnected, connect, address, signer, chainId } = useEthersContext()
-  const [sellToken, setSellToken] = useState<Token>(COMMON_TOKENS[0])
-  const [buyToken, setBuyToken] = useState<Token>(COMMON_TOKENS[1])
+  const [tokens, setTokens] = useState<Token[]>(BASE_TOKENS)
+  const [sellToken, setSellToken] = useState<Token>(BASE_TOKENS[0])
+  const [buyToken, setBuyToken] = useState<Token>(BASE_TOKENS[1])
   const [sellAmount, setSellAmount] = useState('')
   const [slippage, setSlippage] = useState('0.5')
   const [customSlippage, setCustomSlippage] = useState('')
@@ -93,6 +104,31 @@ export default function DexPage() {
   const [txHash, setTxHash] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [simulationPassed, setSimulationPassed] = useState<boolean | null>(null)
+
+  // Fetch live prices from CoinGecko every 60s
+  useEffect(() => {
+    const ids = Object.values(COINGECKO_IDS).join(',')
+    const fetchPrices = async () => {
+      try {
+        const res = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`,
+          { next: { revalidate: 60 } }
+        )
+        if (!res.ok) return
+        const data = await res.json()
+        setTokens(prev => prev.map(t => ({
+          ...t,
+          price: data[COINGECKO_IDS[t.symbol]]?.usd ?? t.price,
+        })))
+        // Update currently selected tokens if their prices changed
+        setSellToken(prev => ({ ...prev, price: data[COINGECKO_IDS[prev.symbol]]?.usd ?? prev.price }))
+        setBuyToken(prev => ({ ...prev, price: data[COINGECKO_IDS[prev.symbol]]?.usd ?? prev.price }))
+      } catch { /* silently ignore — stale price shown */ }
+    }
+    fetchPrices()
+    const interval = setInterval(fetchPrices, 60_000)
+    return () => clearInterval(interval)
+  }, [])
 
   const effectiveSlippage = customSlippage || slippage
 
@@ -264,9 +300,9 @@ export default function DexPage() {
                     className="flex-1 text-right text-2xl font-semibold bg-transparent border-0 outline-none text-[#E5E7EB] tabular-nums placeholder:text-[#9CA3AF]"
                   />
                 </div>
-                {sellAmount && (
+                {sellAmount && sellToken.price > 0 && (
                   <div className="text-right text-xs text-[#9CA3AF] mt-1 tabular-nums">
-                    ≈ ${(parseFloat(sellAmount) * sellToken.price).toLocaleString()}
+                    ≈ ${(parseFloat(sellAmount) * sellToken.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </div>
                 )}
               </div>
@@ -469,12 +505,14 @@ export default function DexPage() {
         onClose={() => setShowSellSelector(false)}
         onSelect={setSellToken}
         exclude={buyToken.address}
+        tokenList={tokens}
       />
       <TokenSelectorModal
         open={showBuySelector}
         onClose={() => setShowBuySelector(false)}
         onSelect={setBuyToken}
         exclude={sellToken.address}
+        tokenList={tokens}
       />
     </div>
   )
