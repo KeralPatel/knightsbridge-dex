@@ -19,7 +19,8 @@ const COINGECKO_IDS: Record<string, string> = {
   UNI:  'uniswap',
 }
 
-const BASE_TOKENS = [
+// Mainnet tokens
+const MAINNET_TOKENS = [
   { symbol: 'ETH',  address: 'ETH',                                           logo: '⟠', price: 0, chainId: 1, decimals: 18 },
   { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', logo: '💲', price: 0, chainId: 1, decimals: 6  },
   { symbol: 'USDT', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', logo: '💵', price: 0, chainId: 1, decimals: 6  },
@@ -27,6 +28,16 @@ const BASE_TOKENS = [
   { symbol: 'LINK', address: '0x514910771af9ca656af840dff83e8264ecf986ca', logo: '⬡', price: 0, chainId: 1, decimals: 18 },
   { symbol: 'UNI',  address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', logo: '🦄', price: 0, chainId: 1, decimals: 18 },
 ]
+
+// Sepolia testnet tokens (0x Sepolia supported tokens)
+const SEPOLIA_TOKENS = [
+  { symbol: 'ETH',  address: 'ETH',                                           logo: '⟠', price: 0, chainId: 11155111, decimals: 18 },
+  { symbol: 'USDC', address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', logo: '💲', price: 1, chainId: 11155111, decimals: 6  },
+  { symbol: 'WETH', address: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14', logo: '⟠', price: 0, chainId: 11155111, decimals: 18 },
+  { symbol: 'LINK', address: '0x779877A7B0D9E8603169DdbD7836e478b4624789', logo: '⬡', price: 0, chainId: 11155111, decimals: 18 },
+]
+
+const BASE_TOKENS = MAINNET_TOKENS
 
 interface Token { symbol: string; address: string; logo: string; price: number; chainId: number; decimals: number }
 
@@ -89,9 +100,11 @@ function TokenSelectorModal({ open, onClose, onSelect, exclude, tokenList }: {
 
 export default function DexPage() {
   const { isConnected, connect, address, signer, chainId } = useEthersContext()
-  const [tokens, setTokens] = useState<Token[]>(BASE_TOKENS)
-  const [sellToken, setSellToken] = useState<Token>(BASE_TOKENS[0])
-  const [buyToken, setBuyToken] = useState<Token>(BASE_TOKENS[1])
+  const isSepolia = chainId === 11155111
+  const defaultTokens = isSepolia ? SEPOLIA_TOKENS : MAINNET_TOKENS
+  const [tokens, setTokens] = useState<Token[]>(defaultTokens)
+  const [sellToken, setSellToken] = useState<Token>(defaultTokens[0])
+  const [buyToken, setBuyToken] = useState<Token>(defaultTokens[1])
   const [sellAmount, setSellAmount] = useState('')
   const [slippage, setSlippage] = useState('0.5')
   const [customSlippage, setCustomSlippage] = useState('')
@@ -105,8 +118,19 @@ export default function DexPage() {
   const [error, setError] = useState('')
   const [simulationPassed, setSimulationPassed] = useState<boolean | null>(null)
 
-  // Fetch live prices from CoinGecko every 60s
+  // Reset token list when chain changes
   useEffect(() => {
+    const list = chainId === 11155111 ? SEPOLIA_TOKENS : MAINNET_TOKENS
+    setTokens(list)
+    setSellToken(list[0])
+    setBuyToken(list[1])
+    setQuote(null)
+    setSellAmount('')
+  }, [chainId])
+
+  // Fetch live prices from CoinGecko every 60s (mainnet only)
+  useEffect(() => {
+    if (chainId === 11155111) return // Sepolia prices are ~fake anyway
     const ids = Object.values(COINGECKO_IDS).join(',')
     const fetchPrices = async () => {
       try {
@@ -178,32 +202,31 @@ export default function DexPage() {
       if (!swapRes.ok) throw new Error(swapData.error)
       setSwapTx(swapData)
 
-      // 2. Simulate transaction
-      const simRes = await fetch('/api/dex/simulate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: swapData.txData.to,
-          data: swapData.txData.data,
-          value: swapData.txData.value,
-          from: address,
-          chainId: chainId || 1,
-        }),
-      })
-      const simData = await simRes.json()
-      setSimulationPassed(simData.success)
-
-      if (!simData.success) {
-        setError(`Simulation failed: ${simData.revertReason}`)
-        setSwapLoading(false)
-        return
+      // 2. Simulate transaction (advisory — does not block the swap)
+      try {
+        const simRes = await fetch('/api/dex/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: swapData.txData.to,
+            data: swapData.txData.data,
+            value: swapData.txData.value,
+            from: address,
+            chainId: chainId || 1,
+          }),
+        })
+        const simData = await simRes.json()
+        setSimulationPassed(simData.success)
+        // Simulation failures are warnings only — MetaMask will show its own confirmation
+      } catch {
+        // Ignore simulation errors — proceed to wallet confirmation
       }
 
       // 3. Check and set allowance if needed
       if (swapData.allowanceTarget && sellToken.address !== 'ETH') {
         const token = new ethers.Contract(sellToken.address, ERC20_ABI, signer!)
         const allowance: bigint = await token.allowance(address, swapData.allowanceTarget)
-        const required = ethers.parseEther(sellAmount)
+        const required = ethers.parseUnits(sellAmount, sellToken.decimals)
 
         if (allowance < required) {
           const approveTx = await token.approve(swapData.allowanceTarget, ethers.MaxUint256)
@@ -244,6 +267,13 @@ export default function DexPage() {
         <h1 className="text-xl font-semibold text-[#E5E7EB]">DEX — Aggregated Swap</h1>
         <p className="text-sm text-[#9CA3AF] mt-0.5">Best-rate execution via 0x Protocol aggregator</p>
       </div>
+
+      {isSepolia && (
+        <div className="mb-4 flex items-center gap-2 bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.3)] rounded-lg px-4 py-2.5 text-xs text-[#F59E0B]">
+          <span className="font-semibold">⚠ Sepolia Testnet</span>
+          <span className="text-[rgba(245,158,11,0.7)]">— No real funds. Transactions use test ETH only.</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Swap Widget */}
@@ -383,13 +413,15 @@ export default function DexPage() {
                 </div>
               )}
 
-              {/* Simulation result */}
+              {/* Simulation result — advisory only */}
               {simulationPassed !== null && (
                 <div className={`rounded p-3 text-xs ${simulationPassed
                   ? 'bg-[rgba(0,255,163,0.05)] border border-[rgba(0,255,163,0.2)] text-[#00FFA3]'
-                  : 'bg-[rgba(239,68,68,0.05)] border border-[rgba(239,68,68,0.2)] text-[#EF4444]'
+                  : 'bg-[rgba(245,158,11,0.05)] border border-[rgba(245,158,11,0.2)] text-[#F59E0B]'
                 }`}>
-                  {simulationPassed ? '✓ Transaction simulation passed' : '✗ Transaction would fail'}
+                  {simulationPassed
+                    ? '✓ Simulation passed — transaction looks good'
+                    : '⚠ Simulation warning — your wallet will confirm before any funds move'}
                 </div>
               )}
 

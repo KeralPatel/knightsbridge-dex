@@ -6,8 +6,9 @@ import { useEthersContext } from '@/app/providers'
 import { Badge } from '@/components/ui/Badge'
 
 const CHAINS = [
-  { id: 1, name: 'Ethereum', short: 'ETH', color: '#627EEA' },
-  { id: 8453, name: 'Base', short: 'BASE', color: '#0052FF' },
+  { id: 1,        name: 'Ethereum',       short: 'ETH',    color: '#627EEA' },
+  { id: 8453,     name: 'Base',           short: 'BASE',   color: '#0052FF' },
+  { id: 11155111, name: 'Sepolia Testnet',short: 'SEP',    color: '#F59E0B' },
 ]
 
 interface TopBarProps {
