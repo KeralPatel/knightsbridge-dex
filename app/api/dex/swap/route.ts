@@ -17,19 +17,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid taker address' }, { status: 400 })
   }
 
-  const { sellToken, buyToken, sellAmount, chainId, slippage } = parsed.data
+  const { sellToken, buyToken, sellAmount, chainId, slippage, decimals } = parsed.data
+
+  const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+  const normSell = sellToken.toUpperCase() === 'ETH' ? ETH_ADDRESS : sellToken
+  const normBuy  = buyToken.toUpperCase()  === 'ETH' ? ETH_ADDRESS : buyToken
 
   try {
-    let sellAmountWei = sellAmount
-    if (parseFloat(sellAmount) < 1e10) {
-      sellAmountWei = ethers.parseEther(sellAmount).toString()
-    }
-
+    const sellAmountWei = ethers.parseUnits(sellAmount, decimals).toString()
     const slippageBps = Math.floor(slippage * 100)
 
     const quote = await getQuote({
-      sellToken,
-      buyToken,
+      sellToken: normSell,
+      buyToken: normBuy,
       sellAmount: sellAmountWei,
       takerAddress: takerParsed.data,
       slippageBps,

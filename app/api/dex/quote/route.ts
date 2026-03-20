@@ -10,22 +10,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
 
-  const { sellToken, buyToken, sellAmount, chainId, slippage } = parsed.data
+  const { sellToken, buyToken, sellAmount, chainId, decimals } = parsed.data
+
+  // Map native ETH symbol to the standard address 0x uses
+  const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+  const normSell = sellToken.toUpperCase() === 'ETH' ? ETH_ADDRESS : sellToken
+  const normBuy  = buyToken.toUpperCase()  === 'ETH' ? ETH_ADDRESS : buyToken
 
   try {
-    // Convert human-readable amount to wei if needed
-    let sellAmountWei = sellAmount
-    if (!sellAmount.includes('.') && sellAmount.length < 18) {
-      // Already in wei
-      sellAmountWei = sellAmount
-    } else {
-      // Convert from ETH to wei
-      sellAmountWei = ethers.parseEther(sellAmount).toString()
-    }
+    // Always convert from human-readable to smallest unit (wei for ETH, etc.)
+    const sellAmountWei = ethers.parseUnits(sellAmount, decimals).toString()
 
     const quote = await getPrice({
-      sellToken,
-      buyToken,
+      sellToken: normSell,
+      buyToken: normBuy,
       sellAmount: sellAmountWei,
       chainId,
     })

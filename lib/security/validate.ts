@@ -56,6 +56,7 @@ export const dexQuoteSchema = z.object({
   chainId: z.coerce.number().optional().default(1),
   takerAddress: addressSchema.optional(),
   slippage: z.coerce.number().min(0).max(50).optional().default(0.5),
+  decimals: z.coerce.number().int().min(0).max(18).optional().default(18),
 })
 
 export const simulateSchema = z.object({

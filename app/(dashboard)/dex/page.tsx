@@ -11,15 +11,15 @@ import { Spinner } from '@/components/ui/Spinner'
 import { ERC20_ABI } from '@/lib/ethers/contracts'
 
 const COMMON_TOKENS = [
-  { symbol: 'ETH', address: 'ETH', logo: '⟠', price: 3412.50, chainId: 1 },
-  { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', logo: '💲', price: 1.00, chainId: 1 },
-  { symbol: 'USDT', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', logo: '💵', price: 1.00, chainId: 1 },
-  { symbol: 'WBTC', address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', logo: '₿', price: 67823.00, chainId: 1 },
-  { symbol: 'LINK', address: '0x514910771af9ca656af840dff83e8264ecf986ca', logo: '⬡', price: 14.20, chainId: 1 },
-  { symbol: 'UNI', address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', logo: '🦄', price: 8.45, chainId: 1 },
+  { symbol: 'ETH',  address: 'ETH',                                           logo: '⟠', price: 3412.50,  chainId: 1, decimals: 18 },
+  { symbol: 'USDC', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', logo: '💲', price: 1.00,     chainId: 1, decimals: 6  },
+  { symbol: 'USDT', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', logo: '💵', price: 1.00,     chainId: 1, decimals: 6  },
+  { symbol: 'WBTC', address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', logo: '₿', price: 67823.00, chainId: 1, decimals: 8  },
+  { symbol: 'LINK', address: '0x514910771af9ca656af840dff83e8264ecf986ca', logo: '⬡', price: 14.20,    chainId: 1, decimals: 18 },
+  { symbol: 'UNI',  address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', logo: '🦄', price: 8.45,     chainId: 1, decimals: 18 },
 ]
 
-interface Token { symbol: string; address: string; logo: string; price: number; chainId: number }
+interface Token { symbol: string; address: string; logo: string; price: number; chainId: number; decimals: number }
 
 interface QuoteData {
   price: string
@@ -107,7 +107,7 @@ export default function DexPage() {
     setError('')
     try {
       const res = await fetch(
-        `/api/dex/quote?sellToken=${sellToken.address}&buyToken=${buyToken.address}&sellAmount=${sellAmount}&chainId=${chainId || 1}`
+        `/api/dex/quote?sellToken=${sellToken.address}&buyToken=${buyToken.address}&sellAmount=${sellAmount}&chainId=${chainId || 1}&decimals=${sellToken.decimals}`
       )
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -136,7 +136,7 @@ export default function DexPage() {
     try {
       // 1. Get swap tx data
       const swapRes = await fetch(
-        `/api/dex/swap?sellToken=${sellToken.address}&buyToken=${buyToken.address}&sellAmount=${ethers.parseEther(sellAmount).toString()}&takerAddress=${address}&slippage=${effectiveSlippage}&chainId=${chainId || 1}`
+        `/api/dex/swap?sellToken=${sellToken.address}&buyToken=${buyToken.address}&sellAmount=${sellAmount}&takerAddress=${address}&slippage=${effectiveSlippage}&chainId=${chainId || 1}&decimals=${sellToken.decimals}`
       )
       const swapData = await swapRes.json()
       if (!swapRes.ok) throw new Error(swapData.error)
@@ -305,7 +305,9 @@ export default function DexPage() {
                       <div className="flex justify-end"><Spinner size="sm" /></div>
                     ) : (
                       <div className="text-2xl font-semibold text-[#00FFA3] tabular-nums">
-                        {quote?.buyAmount ? parseFloat(quote.buyAmount).toLocaleString(undefined, { maximumSignificantDigits: 6 }) : '0.0'}
+                        {quote?.buyAmount
+                          ? (parseFloat(quote.buyAmount) / Math.pow(10, buyToken.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })
+                          : '0.0'}
                       </div>
                     )}
                   </div>
