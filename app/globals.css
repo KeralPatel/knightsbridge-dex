@@ -1,0 +1,237 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0B0F14;
+  --bg-card: #11161D;
+  --border: #1F2A37;
+  --accent-green: #00FFA3;
+  --accent-blue: #3B82F6;
+  --accent-red: #EF4444;
+  --text-primary: #E5E7EB;
+  --text-secondary: #9CA3AF;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  min-height: 100vh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2d3f52;
+}
+
+/* Tabular numbers for all price/number displays */
+.tabular-nums,
+[data-price],
+[data-amount],
+.font-mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 1px solid var(--accent-green);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(0, 255, 163, 0.15);
+  color: var(--text-primary);
+}
+
+/* Utility classes */
+@layer utilities {
+  .bg-card {
+    background-color: var(--bg-card);
+  }
+  .border-card {
+    border-color: var(--border);
+  }
+  .text-green {
+    color: var(--accent-green);
+  }
+  .text-red {
+    color: var(--accent-red);
+  }
+  .text-blue {
+    color: var(--accent-blue);
+  }
+  .text-muted {
+    color: var(--text-secondary);
+  }
+
+  /* Paywall blur */
+  .paywall-blur {
+    filter: blur(4px);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Thin border */
+  .border-thin {
+    border-width: 1px;
+    border-color: var(--border);
+  }
+
+  /* Card base */
+  .card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  /* Number animation */
+  .num-change {
+    transition: color 0.3s ease;
+  }
+
+  /* Positive/negative coloring */
+  .positive { color: var(--accent-green); }
+  .negative { color: var(--accent-red); }
+  .neutral  { color: var(--text-secondary); }
+}
+
+/* Table styles */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid rgba(31, 42, 55, 0.5);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Input base */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  transition: border-color 0.15s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent-green);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Animations */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    rgba(31, 42, 55, 0.5) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.live-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Signal strength bar */
+.signal-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.signal-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
