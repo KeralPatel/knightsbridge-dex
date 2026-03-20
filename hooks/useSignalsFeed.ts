@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { createBrowserSupabaseClient } from '@/lib/supabase/client'
 
 interface Signal {
@@ -34,33 +34,37 @@ export function useSignalsFeed(options: UseSignalsFeedOptions = {}) {
   const [error, setError] = useState<Error | null>(null)
   const channelRef = useRef<ReturnType<ReturnType<typeof createBrowserSupabaseClient>['channel']> | null>(null)
 
-  useEffect(() => {
-    const supabase = createBrowserSupabaseClient()
+  const buildUrl = useCallback(() => {
+    const params = new URLSearchParams()
+    params.set('limit', maxItems.toString())
+    if (chain) params.set('chain', chain)
+    if (type) params.set('type', type)
+    if (minStrength > 0) params.set('minStrength', minStrength.toString())
+    return `/api/signals?${params.toString()}`
+  }, [chain, type, minStrength, maxItems])
 
-    // Load initial signals
-    const loadInitial = async () => {
-      let query = supabase
-        .from('signals')
-        .select('*')
-        .eq('is_active', true)
-        .gte('strength', minStrength)
-        .order('created_at', { ascending: false })
-        .limit(maxItems)
-
-      if (chain) query = query.eq('chain', chain)
-      if (type) query = query.eq('type', type)
-
-      const { data, error: fetchError } = await query
-      if (fetchError) {
-        setError(new Error(fetchError.message))
-      } else {
-        setSignals(data ?? [])
-      }
+  // Load (or reload) signals from the API route (uses service-role key server-side)
+  const loadSignals = useCallback(async () => {
+    try {
+      const res = await fetch(buildUrl())
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      setSignals(data.signals ?? [])
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to load signals'))
     }
+  }, [buildUrl])
 
-    loadInitial()
+  useEffect(() => {
+    // Initial fetch
+    loadSignals()
 
-    // Subscribe to realtime inserts
+    // Poll every 30s as a fallback
+    const pollInterval = setInterval(loadSignals, 30_000)
+
+    // Supabase Realtime for instant updates
+    const supabase = createBrowserSupabaseClient()
     const channel = supabase
       .channel('signals-feed')
       .on(
@@ -72,23 +76,21 @@ export function useSignalsFeed(options: UseSignalsFeedOptions = {}) {
           if (minStrength && newSignal.strength < minStrength) return
           if (chain && newSignal.chain !== chain) return
           if (type && newSignal.type !== type) return
-
           setSignals((prev) => [newSignal, ...prev].slice(0, maxItems))
         }
       )
       .subscribe((status) => {
         setIsConnected(status === 'SUBSCRIBED')
-        if (status === 'CHANNEL_ERROR') {
-          setError(new Error('Realtime connection failed'))
-        }
+        // Don't set error on CHANNEL_ERROR — polling will keep data fresh
       })
 
     channelRef.current = channel
 
     return () => {
+      clearInterval(pollInterval)
       channel.unsubscribe()
     }
-  }, [chain, type, minStrength, maxItems])
+  }, [chain, type, minStrength, maxItems, loadSignals])
 
   return { signals, isConnected, error }
 }

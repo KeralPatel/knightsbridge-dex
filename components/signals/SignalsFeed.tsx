@@ -48,14 +48,15 @@ export function SignalsFeed() {
 
       {/* Signal list */}
       <div className="divide-y divide-[rgba(31,42,55,0.5)]">
-        {error && (
+        {error && signals.length === 0 && (
           <div className="px-4 py-6 text-center text-xs text-[#EF4444]">
-            Failed to load signals. Retrying...
+            {error.message}
           </div>
         )}
         {!error && signals.length === 0 && (
-          <div className="px-4 py-8 text-center text-sm text-[#9CA3AF]">
-            No signals match current filters
+          <div className="px-4 py-8 text-center">
+            <div className="text-sm text-[#9CA3AF] mb-1">No signals yet</div>
+            <div className="text-xs text-[#4B5563]">Signals appear here as the indexer detects on-chain activity</div>
           </div>
         )}
         {signals.map((signal) => (
