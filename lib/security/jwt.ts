@@ -1,8 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 
-const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'fallback-dev-secret-min-32-chars-long-x'
-)
+if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var is not set')
+const secret = new TextEncoder().encode(process.env.JWT_SECRET)
 
 export interface JWTPayload {
   sub: string      // user id

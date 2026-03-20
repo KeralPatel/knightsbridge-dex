@@ -37,15 +37,6 @@ export async function GET(req: NextRequest) {
     })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Quote failed'
-    // Return mock data if 0x API not configured
-    if (msg.includes('API key') || !process.env.ZERO_EX_API_KEY) {
-      return NextResponse.json({
-        price: '0.0003012',
-        priceImpact: '0.12',
-        buyAmount: (parseFloat(sellAmount) * 3321.50).toFixed(6),
-        estimatedGas: '180000',
-      })
-    }
     return NextResponse.json({ error: msg }, { status: 400 })
   }
 }

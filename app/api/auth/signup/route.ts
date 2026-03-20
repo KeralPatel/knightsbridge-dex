@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (error || !data.user) {
-      if (error?.message?.includes('already registered')) {
+      if (error?.message?.toLowerCase().includes('already')) {
         return NextResponse.json({ error: 'Email already in use' }, { status: 409 })
       }
       return NextResponse.json({ error: error?.message || 'Signup failed' }, { status: 400 })

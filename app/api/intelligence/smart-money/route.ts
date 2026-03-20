@@ -31,11 +31,12 @@ export async function GET(req: NextRequest) {
       .order('total_pnl_usd', { ascending: false })
       .range(offset, offset + limit - 1)
 
+    let filteredQuery = query
     if (chain) {
-      query.eq('chain', chain)
+      filteredQuery = filteredQuery.eq('chain', chain)
     }
 
-    const { data: wallets, error, count } = await query
+    const { data: wallets, error, count } = await filteredQuery
 
     if (error) throw error
 

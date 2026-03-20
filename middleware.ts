@@ -5,8 +5,10 @@ import { verifyToken, extractToken } from '@/lib/security/jwt'
 // Routes that require authentication
 const PROTECTED_API_ROUTES = [
   '/api/user',
-  '/api/launchpad/deploy',
+  '/api/launchpad',       // covers POST /api/launchpad and /api/launchpad/deploy
   '/api/intelligence',
+  '/api/dex/swap',
+  '/api/dex/simulate',
 ]
 
 // Routes that require Pro tier

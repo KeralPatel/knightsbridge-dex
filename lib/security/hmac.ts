@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 
-const HMAC_SECRET = process.env.WORKER_HMAC_SECRET || 'dev-hmac-secret-replace-in-production'
+const HMAC_SECRET = process.env.WORKER_HMAC_SECRET
+if (!HMAC_SECRET) throw new Error('WORKER_HMAC_SECRET env var is not set')
 
 export function signPayload(payload: string): string {
   return crypto
