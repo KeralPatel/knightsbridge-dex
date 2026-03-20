@@ -157,7 +157,7 @@ export default function DexPage() {
   const effectiveSlippage = customSlippage || slippage
 
   const fetchQuote = useCallback(async () => {
-    if (!sellAmount || parseFloat(sellAmount) <= 0) {
+    if (!sellAmount || parseFloat(sellAmount) <= 0 || chainId === 11155111) {
       setQuote(null)
       setSwapTx(null)
       return
@@ -269,9 +269,27 @@ export default function DexPage() {
       </div>
 
       {isSepolia && (
-        <div className="mb-4 flex items-center gap-2 bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.3)] rounded-lg px-4 py-2.5 text-xs text-[#F59E0B]">
-          <span className="font-semibold">⚠ Sepolia Testnet</span>
-          <span className="text-[rgba(245,158,11,0.7)]">— No real funds. Transactions use test ETH only.</span>
+        <div className="mb-4 bg-[rgba(245,158,11,0.06)] border border-[rgba(245,158,11,0.3)] rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-semibold text-[#F59E0B]">⚠ Sepolia Testnet — DEX Routing Unavailable</span>
+          </div>
+          <p className="text-xs text-[#9CA3AF] mb-3">
+            0x Protocol does not support Sepolia. DEX quote/swap requires a supported network (Ethereum mainnet, Base, Arbitrum, Optimism, etc.)
+          </p>
+          <p className="text-xs text-[#9CA3AF] mb-3">
+            To test token swaps on Sepolia, use Uniswap directly:
+          </p>
+          <a
+            href="https://app.uniswap.org/swap?chain=sepolia"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs bg-[#1F2A37] hover:bg-[#2d3f52] text-[#E5E7EB] px-3 py-1.5 rounded transition-colors"
+          >
+            Open Uniswap on Sepolia ↗
+          </a>
+          <p className="text-xs text-[#4B5563] mt-3">
+            Switch to Ethereum Mainnet or Base in the chain selector above to use the DEX aggregator.
+          </p>
         </div>
       )}
 
