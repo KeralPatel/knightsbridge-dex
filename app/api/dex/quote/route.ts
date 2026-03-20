@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
 
-  const { sellToken, buyToken, sellAmount, chainId, decimals } = parsed.data
+  const { sellToken, buyToken, sellAmount, chainId, decimals, buyDecimals } = parsed.data
 
   // Map native ETH symbol to the standard address 0x uses
   const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
@@ -26,6 +26,8 @@ export async function GET(req: NextRequest) {
       buyToken: normBuy,
       sellAmount: sellAmountWei,
       chainId,
+      sellDecimals: decimals,
+      buyDecimals,
     })
 
     return NextResponse.json(quote, {

@@ -25,18 +25,30 @@ export interface RouteStep {
 export async function getPrice(params: {
   sellToken: string
   buyToken: string
-  sellAmount: string
+  sellAmount: string       // in smallest units (wei)
   chainId: number
-}): Promise<{ price: string; priceImpact: string; buyAmount: string }> {
+  sellDecimals?: number
+  buyDecimals?: number
+}): Promise<{ price: string; priceImpact: string; buyAmount: string; estimatedGas: string }> {
   const data = await fetch0x('/swap/permit2/price', params.chainId, {
     sellToken: params.sellToken,
     buyToken: params.buyToken,
     sellAmount: params.sellAmount,
   })
+
+  // 0x price endpoint returns gas (not estimatedGas) and no price field.
+  // Compute human-readable price from raw amounts + decimals.
+  const sellDec = params.sellDecimals ?? 18
+  const buyDec  = params.buyDecimals  ?? 18
+  const buyHuman  = parseFloat(data.buyAmount  || '0') / Math.pow(10, buyDec)
+  const sellHuman = parseFloat(params.sellAmount)      / Math.pow(10, sellDec)
+  const price = sellHuman > 0 ? (buyHuman / sellHuman).toFixed(6) : '0'
+
   return {
-    price: data.price || '0',
+    price,
     priceImpact: (parseFloat(data.estimatedPriceImpact || '0') * 100).toFixed(4),
     buyAmount: data.buyAmount || '0',
+    estimatedGas: data.gas || data.estimatedGas || '200000',
   }
 }
 

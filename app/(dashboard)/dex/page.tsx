@@ -107,7 +107,7 @@ export default function DexPage() {
     setError('')
     try {
       const res = await fetch(
-        `/api/dex/quote?sellToken=${sellToken.address}&buyToken=${buyToken.address}&sellAmount=${sellAmount}&chainId=${chainId || 1}&decimals=${sellToken.decimals}`
+        `/api/dex/quote?sellToken=${sellToken.address}&buyToken=${buyToken.address}&sellAmount=${sellAmount}&chainId=${chainId || 1}&decimals=${sellToken.decimals}&buyDecimals=${buyToken.decimals}`
       )
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
