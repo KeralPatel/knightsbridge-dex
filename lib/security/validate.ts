@@ -74,8 +74,9 @@ export const createApiKeySchema = z.object({
 // ─── Signal Schemas ────────────────────────────────────────────────────────────
 export const signalQuerySchema = z.object({
   type: z.string().optional(),
-  chain: z.coerce.number().optional(),
-  strengthMin: z.coerce.number().min(0).max(100).optional().default(0),
+  chain: z.enum(['1', '8453']).optional(),
+  token: z.string().optional(),
+  minStrength: z.coerce.number().min(0).max(100).optional().default(0),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
 })
@@ -99,6 +100,7 @@ export const ingestSignalSchema = z.object({
 
 // ─── Wallet Schemas ────────────────────────────────────────────────────────────
 export const walletQuerySchema = z.object({
-  address: addressSchema,
-  chainId: z.coerce.number().optional().default(1),
+  chain: z.enum(['1', '8453']).optional().default('1'),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 })

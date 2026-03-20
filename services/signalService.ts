@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/admin'
 
 export type SignalTier = 'free' | 'pro' | 'enterprise'
 

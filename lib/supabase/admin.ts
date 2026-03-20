@@ -13,3 +13,6 @@ export function createAdminClient() {
     }
   )
 }
+
+// Alias used by API route files
+export const createServerSupabaseClient = createAdminClient

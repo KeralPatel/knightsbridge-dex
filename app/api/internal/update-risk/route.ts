@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyWorkerRequest } from '@/lib/security/hmac'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const updateRiskSchema = z.object({

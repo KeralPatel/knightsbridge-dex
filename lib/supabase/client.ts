@@ -6,3 +6,6 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 }
+
+// Alias used by hook files
+export const createBrowserSupabaseClient = createClient

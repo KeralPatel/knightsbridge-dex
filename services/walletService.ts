@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/admin'
 
 export async function getOrCreateWallet(address: string, chain: string) {
   const supabase = createServerSupabaseClient()

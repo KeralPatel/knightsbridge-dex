@@ -37,13 +37,8 @@ export function PriceChart({ tokenAddress, chainId }: PriceChartProps) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    let chart: {
-      remove: () => void
-      timeScale: () => { fitContent: () => void }
-      addCandlestickSeries: (opts: Record<string, unknown>) => { setData: (data: unknown[]) => void }
-      addHistogramSeries: (opts: Record<string, unknown>) => { setData: (data: unknown[]) => void }
-      applyOptions: (opts: Record<string, unknown>) => void
-    } | null = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let chart: any = null
 
     const init = async () => {
       if (!containerRef.current) return

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyWorkerRequest } from '@/lib/security/hmac'
 import { ingestSignalSchema } from '@/lib/security/validate'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/admin'
 
 export async function POST(req: NextRequest) {
   // HMAC authentication — only allow requests from the worker

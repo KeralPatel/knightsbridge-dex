@@ -117,11 +117,13 @@ function EthersProvider({ children }: { children: React.ReactNode }) {
   // Listen for account/chain changes
   useEffect(() => {
     if (!window.ethereum) return
-    const handleAccountsChanged = (accounts: string[]) => {
+    const handleAccountsChanged = (...args: unknown[]) => {
+      const accounts = args[0] as string[]
       if (accounts.length === 0) disconnect()
       else setAddress(accounts[0])
     }
-    const handleChainChanged = (chainIdHex: string) => {
+    const handleChainChanged = (...args: unknown[]) => {
+      const chainIdHex = args[0] as string
       setChainId(parseInt(chainIdHex, 16))
     }
     window.ethereum.on('accountsChanged', handleAccountsChanged)
